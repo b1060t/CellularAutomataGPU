@@ -6,8 +6,6 @@
 
 struct Cell
 {
-    int posx;
-    int posy;
     int pre;
     int val;
 };
@@ -22,22 +20,20 @@ float rand(float2 st, float n) {
     return frac(sin(dot(st.xy, float2(12.9898,78.233)))*43758.5453123);
 }
 
-[numthreads(80,1,1)]
+[numthreads(160,1,1)]
 void Init (uint3 id : SV_DispatchThreadID)
 {
-    cells[id.x].posx = id.x%width;
-    cells[id.x].posy = id.x/width;
     float r = rand(float2(id.x, 11), 10);
     cells[id.x].pre = r < 0.5 ? 1 : 0;
     cells[id.x].val = cells[id.x].pre;
 };
 
-[numthreads(80,1,1)]
+[numthreads(160,1,1)]
 void Process (uint3 id : SV_DispatchThreadID)
 {
     int val = 0;
     int x = id.x % width;
-    int y = floor(id.y / width) + 1;
+    int y = id.y / width + 1;
 
     val += x - 1 >= 0 ? cells[id.x - 1].pre : 0;
     val += x + 1 < width ? cells[id.x + 1].pre : 0;
@@ -70,7 +66,7 @@ void Process (uint3 id : SV_DispatchThreadID)
     }
 };
 
-[numthreads(80,1,1)]
+[numthreads(160,1,1)]
 void Update (uint3 id : SV_DispatchThreadID)
 {
     cells[id.x].pre = cells[id.x].val;

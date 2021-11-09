@@ -9,20 +9,26 @@ public struct Cell
 	public int val;
 }
 
+public struct CellOpt
+{
+	public int pre;
+	public int val;
+}
+
 public class Automata : MonoBehaviour {
 
 	public ComputeShader compute;
 
 
-	Cell[] data;
+	CellOpt[] data;
 	int size;
 	ComputeBuffer buffer;
 
 	RenderTexture texture;
 
 	private void Awake() {
-		data = new Cell[Screen.width * Screen.height];
-		size = 4 * sizeof(int);
+		data = new CellOpt[Screen.width * Screen.height];
+		size = 2 * sizeof(int);
 	}
 
 	private void Start() {
@@ -35,7 +41,7 @@ public class Automata : MonoBehaviour {
 		compute.SetBuffer(0, "cells", buffer);
 		compute.SetInt("width", Screen.width);
 		compute.SetInt("height", Screen.height);
-		compute.Dispatch(0, data.Length/80, 1, 1);
+		compute.Dispatch(0, data.Length/160, 1, 1);
 		while(!buffer.IsValid()) {}
 		buffer.GetData(data);
 	}
@@ -44,13 +50,13 @@ public class Automata : MonoBehaviour {
 		compute.SetBuffer(1, "cells", buffer);
 		compute.SetInt("width", Screen.width);
 		compute.SetInt("height", Screen.height);
-		compute.Dispatch(1, data.Length/80, 1, 1);
+		compute.Dispatch(1, data.Length/160, 1, 1);
 		buffer.GetData(data);
 
 		compute.SetBuffer(2, "cells", buffer);
 		compute.SetInt("width", Screen.width);
 		compute.SetInt("height", Screen.height);
-		compute.Dispatch(2, data.Length/80, 1, 1);
+		compute.Dispatch(2, data.Length/160, 1, 1);
 		buffer.GetData(data);
 
 		compute.SetTexture(3, "tex", texture);
