@@ -12,8 +12,11 @@ struct Cell
 
 RWStructuredBuffer<Cell> cells;
 RWTexture2D<float4> tex;
-int width;
-int height;
+int scrWidth;
+int scrHeight;
+float zoom;
+int posx;
+int posy;
 
 float rand(float2 st, float n) {
  	st = floor(st * n);
@@ -24,7 +27,7 @@ float rand(float2 st, float n) {
 void Init (uint3 id : SV_DispatchThreadID)
 {
     float r = rand(float2(id.x, 11), 10);
-    cells[id.x].pre = r < 0.5 ? 1 : 0;
+    cells[id.x].pre = r < 0.3 ? 1 : 0;
     cells[id.x].val = cells[id.x].pre;
 };
 
@@ -32,24 +35,24 @@ void Init (uint3 id : SV_DispatchThreadID)
 void Process (uint3 id : SV_DispatchThreadID)
 {
     int val = 0;
-    int x = id.x % width;
-    int y = id.y / width + 1;
+    int x = id.x % scrWidth;
+    int y = id.y / scrWidth + 1;
 
     val += x - 1 >= 0 ? cells[id.x - 1].pre : 0;
-    val += x + 1 < width ? cells[id.x + 1].pre : 0;
+    val += x + 1 < scrWidth ? cells[id.x + 1].pre : 0;
 
     if(y - 1 >= 0)
     {
-        val += cells[id.x - width].pre;
-        val += x - 1 >= 0 ? cells[id.x - width - 1].pre : 0;
-        val += x + 1 < width ? cells[id.x - width + 1].pre : 0;
+        val += cells[id.x - scrWidth].pre;
+        val += x - 1 >= 0 ? cells[id.x - scrWidth - 1].pre : 0;
+        val += x + 1 < scrWidth ? cells[id.x - scrWidth + 1].pre : 0;
     }
 
-    if(y + 1 < width)
+    if(y + 1 < scrWidth)
     {
-        val += cells[id.x + width].pre;
-        val += x - 1 >= 0 ? cells[id.x + width - 1].pre : 0;
-        val += x + 1 < width ? cells[id.x + width + 1].pre : 0;
+        val += cells[id.x + scrWidth].pre;
+        val += x - 1 >= 0 ? cells[id.x + scrWidth - 1].pre : 0;
+        val += x + 1 < scrWidth ? cells[id.x + scrWidth + 1].pre : 0;
     }
 
     if(val == 2)
@@ -72,15 +75,22 @@ void Update (uint3 id : SV_DispatchThreadID)
     cells[id.x].pre = cells[id.x].val;
 }
 
-[numthreads(4,4,1)]
-void Render (uint3 id : SV_DispatchThreadID)
+float4 GetVal(uint2 coord)
 {
-    if(cells[id.y*width+id.x].val==1)
+    if(cells[coord.y*scrWidth+coord.x].val==1)
     {
-        tex[id.xy] = float4(0.0, 0.0, 0.0, 0.0);
+        return float4(0.0, 0.0, 0.0, 0.0);
     }
     else
     {
-        tex[id.xy] = float4(1.0, 1.0, 1.0, 0.0);
+        return float4(1.0, 1.0, 1.0, 0.0);
     }
+}
+
+[numthreads(4,4,1)]
+void Render (uint3 id : SV_DispatchThreadID)
+{
+    float x = id.x / zoom + posx;
+    float y = id.y / zoom + posy;
+    tex[id.xy] = GetVal(uint2(x, y));
 }

@@ -6,6 +6,16 @@ using UnityEngine.Tilemaps;
 using System.Diagnostics;
 using UnityEngine.Profiling; 
 
+
+public struct CellOriginal
+{
+	public int posx;
+	public int posy;
+	public int pre;
+	public int val;
+}
+
+
 public class Prototype : MonoBehaviour {
 
 	public Tilemap map;
@@ -22,7 +32,7 @@ public class Prototype : MonoBehaviour {
 	Vector3Int boundMin;
 	Vector3Int bound;
 
-	Cell[] data;
+	CellOriginal[] data;
 	Tile[] tiles;
 	int size;
 	ComputeBuffer buffer;
@@ -34,7 +44,7 @@ public class Prototype : MonoBehaviour {
 		boundMin = ScreenToCell(new Vector3(0, 0, 0));
 		boundMax.x += 1;
 		bound = boundMax - boundMin;
-		data = new Cell[bound.x * bound.y];
+		data = new CellOriginal[bound.x * bound.y];
 		size = 4 * sizeof(int);
 	}
 	private void Start() {
@@ -53,14 +63,14 @@ public class Prototype : MonoBehaviour {
 
 		tiles = new Tile[data.Length];
 		int i = 0;
-		foreach(Cell c in data)
+		foreach(CellOriginal c in data)
 		{
 			Vector3Int pos = ScreenToCell(new Vector3(c.posx, c.posy, 0));
 			tiles[i] = ScriptableObject.CreateInstance<Tile>();
 			tiles[i].sprite = cellTile.sprite;
 			tiles[i++].color = c.pre == 1 ? Color.black : Color.white;
 		}
-		map.SetTiles(data.ToList<Cell>().Select(c => new Vector3Int(boundMin.x + c.posx, boundMin.y + c.posy, 0)).ToArray<Vector3Int>(), tiles);
+		map.SetTiles(data.ToList<CellOriginal>().Select(c => new Vector3Int(boundMin.x + c.posx, boundMin.y + c.posy, 0)).ToArray<Vector3Int>(), tiles);
 	}
 
 	private void Update() {
@@ -102,7 +112,7 @@ public class Prototype : MonoBehaviour {
 	{
 		int i = 0;
 		
-		foreach(Cell c in data)
+		foreach(CellOriginal c in data)
 		{
 			if(c.val != c.pre)
 			{
