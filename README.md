@@ -1,5 +1,7 @@
 ## Cellular Automata based on GPU
 
+**`.rle` file supported**
+
 **Controll:**
 
 `Space`: Pause/Start
@@ -14,3 +16,6 @@
 ![](run.png)
 
 **4K 450FPS GTX1080**
+
+**Turing machine:**
+![](turing.png)
