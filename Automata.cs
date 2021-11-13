@@ -42,9 +42,9 @@ public class Automata : MonoBehaviour {
 		compute.SetBuffer(3, "cells", buffer);
 		compute.SetInt("scrWidth", Screen.width);
 		compute.SetInt("scrHeight", Screen.height);
-		compute.Dispatch(0, data.Length/160, 1, 1);
-		while(!buffer.IsValid()) {}
-		buffer.GetData(data);
+		compute.SetTexture(3, "tex", texture);
+
+		compute.Dispatch(0, data.Length/320, 1, 1);
 	}
 
 	private void Update() {
@@ -74,30 +74,25 @@ public class Automata : MonoBehaviour {
 	{
 		if(Input.GetMouseButtonUp(0))
 		{
-			Vector2 pos = Input.mousePosition;
-			pos = pos / camZoom + originPos;
-			int idx = (int)pos.y*Screen.width+(int)pos.x;
+			buffer.GetData(data);
+			Vector2 pos = Input.mousePosition / camZoom;
+			Vector2Int posi = new Vector2Int((int)pos.x + (int)originPos.x, (int)pos.y + (int)originPos.y);
+			int idx = posi.y*Screen.width+posi.x;
 			data[idx].val = data[idx].val == 0 ? 1 : 0;
 			buffer.SetData(data);
-			compute.Dispatch(2, data.Length/160, 1, 1);
-			buffer.GetData(data);
+			compute.Dispatch(2, data.Length/320, 1, 1);
 		}
 	}
 
 	private void Compute()
 	{
-		compute.Dispatch(2, data.Length/160, 1, 1);
-		buffer.GetData(data);
-
-		compute.Dispatch(1, data.Length/160, 1, 1);
-		buffer.GetData(data);
+		compute.Dispatch(2, data.Length/320, 1, 1);
+		compute.Dispatch(1, data.Length/320, 1, 1);
 	}
 
 	private void OnRenderImage(RenderTexture src, RenderTexture dest) {
 
-		compute.SetTexture(3, "tex", texture);
 		compute.Dispatch(3, texture.width/4, texture.height/4, 1);
-		buffer.GetData(data);
 
 		Graphics.Blit(texture, dest);
 	}

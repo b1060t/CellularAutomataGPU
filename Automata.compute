@@ -23,7 +23,7 @@ float rand(float2 st, float n) {
     return frac(sin(dot(st.xy, float2(12.9898,78.233)))*43758.5453123);
 }
 
-[numthreads(160,1,1)]
+[numthreads(320,1,1)]
 void Init (uint3 id : SV_DispatchThreadID)
 {
     float r = rand(float2(id.x, 11), 10);
@@ -31,7 +31,7 @@ void Init (uint3 id : SV_DispatchThreadID)
     cells[id.x].val = cells[id.x].pre;
 };
 
-[numthreads(160,1,1)]
+[numthreads(320,1,1)]
 void Process (uint3 id : SV_DispatchThreadID)
 {
     int val = 0;
@@ -69,7 +69,7 @@ void Process (uint3 id : SV_DispatchThreadID)
     }
 };
 
-[numthreads(160,1,1)]
+[numthreads(320,1,1)]
 void Update (uint3 id : SV_DispatchThreadID)
 {
     cells[id.x].pre = cells[id.x].val;
