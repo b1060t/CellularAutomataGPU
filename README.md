@@ -2,6 +2,8 @@
 
 **`.rle` file supported**
 
+TODO: Scale larger than `65535*1024` can't be supported due to Unity compute shader's constraints and no way to get the reference of subarray in C# without using pointer in `unsafe` mode. Larger scale may be implemented via C++ and OpenGL.
+
 **Controll:**
 
 `Space`: Pause/Start

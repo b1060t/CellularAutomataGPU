@@ -18,6 +18,10 @@ public class Automata : MonoBehaviour {
 
 	public float camZoom = 1;
 	public Vector2 camPos;
+
+	// Default 2K
+	public int WIDTH = 2560;
+	public int HEIGHT = 1440;
 	Vector2 originPos;
 
 	Cell[] data;
@@ -31,12 +35,12 @@ public class Automata : MonoBehaviour {
 	int rule = Convert.ToInt32("000001000000001100", 2);
 
 	private void Awake() {
-		data = new Cell[Screen.width * Screen.height];
+		data = new Cell[WIDTH * HEIGHT];
 		size = 2 * sizeof(int);
 	}
 
 	private void Start() {
-		camPos = new Vector2(Screen.width / 2, Screen.height / 2);
+		camPos = new Vector2(WIDTH / 2, HEIGHT / 2);
 		originPos = new Vector2(0, 0);
 
 		texture = new RenderTexture(Screen.width, Screen.height, 24);
@@ -52,8 +56,7 @@ public class Automata : MonoBehaviour {
 		compute.SetBuffer(1, "cells", buffer);
 		compute.SetBuffer(2, "cells", buffer);
 		compute.SetBuffer(3, "cells", buffer);
-		compute.SetInt("scrWidth", Screen.width);
-		compute.SetInt("scrHeight", Screen.height);
+		compute.SetInt("Width", WIDTH);
 		compute.SetInt("rule", rule);
 		compute.SetTexture(3, "tex", texture);
 
@@ -75,8 +78,8 @@ public class Automata : MonoBehaviour {
 		camPos += new Vector2(Input.GetAxis("Horizontal") * 10 / camZoom, Input.GetAxis("Vertical") * 10 / camZoom);
 		float xoffset = Screen.width / (2 * camZoom);
 		float yoffset = Screen.height / (2 * camZoom);
-		camPos.x = Mathf.Max(Mathf.Min(camPos.x, Screen.width - xoffset), xoffset);
-		camPos.y = Mathf.Max(Mathf.Min(camPos.y, Screen.height - yoffset), yoffset);
+		camPos.x = Mathf.Max(Mathf.Min(camPos.x, WIDTH - xoffset), xoffset);
+		camPos.y = Mathf.Max(Mathf.Min(camPos.y, HEIGHT - yoffset), yoffset);
 		originPos.x = camPos.x - xoffset;
 		originPos.y = camPos.y - yoffset;
 		compute.SetInt("posx", (int)originPos.x);
@@ -90,8 +93,8 @@ public class Automata : MonoBehaviour {
 			buffer.GetData(data);
 			Vector2 pos = Input.mousePosition / camZoom;
 			Vector2Int posi = new Vector2Int((int)pos.x + (int)originPos.x, (int)pos.y + (int)originPos.y);
-			if(posi.x < 0 || posi.x > Screen.width || posi.y < 0 || posi.y > Screen.height) return;
-			int idx = posi.y*Screen.width+posi.x;
+			if(posi.x < 0 || posi.x > WIDTH || posi.y < 0 || posi.y > HEIGHT) return;
+			int idx = posi.y*WIDTH+posi.x;
 			data[idx].val = data[idx].val == 0 ? 1 : 0;
 			buffer.SetData(data);
 			compute.Dispatch(2, data.Length/320, 1, 1);
@@ -178,7 +181,7 @@ public class Automata : MonoBehaviour {
 				}
 			}
 
-			Vector2Int startPoint = new Vector2Int((Screen.width - x) / 2, (Screen.height - y) / 2);
+			Vector2Int startPoint = new Vector2Int((WIDTH - x) / 2, (HEIGHT - y) / 2);
 			int row = startPoint.y + y;
 			foreach (string s in contents)
 			{
@@ -205,13 +208,13 @@ public class Automata : MonoBehaviour {
 								int max = ptr + num;
 								for(;ptr<max;ptr++)
 								{
-									data[row*Screen.width+ptr+startPoint.x].val = 1;
+									data[row*WIDTH+ptr+startPoint.x].val = 1;
 								}
 								num = 0;
 							}
 							else
 							{
-								data[row*Screen.width+ptr+startPoint.x].val = 1;
+								data[row*WIDTH+ptr+startPoint.x].val = 1;
 								ptr++;
 							}
 							break;

@@ -12,8 +12,7 @@ struct Cell
 
 RWStructuredBuffer<Cell> cells;
 RWTexture2D<float4> tex;
-int scrWidth;
-int scrHeight;
+int Width;
 float zoom;
 int posx;
 int posy;
@@ -37,24 +36,24 @@ void Init (uint3 id : SV_DispatchThreadID)
 void Process (uint3 id : SV_DispatchThreadID)
 {
     int val = 0;
-    int x = id.x % scrWidth;
-    int y = id.x / scrWidth;
+    int x = id.x % Width;
+    int y = id.x / Width;
 
     val += x - 1 >= 0 ? cells[id.x - 1].pre : 0;
-    val += x + 1 < scrWidth ? cells[id.x + 1].pre : 0;
+    val += x + 1 < Width ? cells[id.x + 1].pre : 0;
 
     if(y - 1 >= 0)
     {
-        val += cells[id.x - scrWidth].pre;
-        val += x - 1 >= 0 ? cells[id.x - scrWidth - 1].pre : 0;
-        val += x + 1 < scrWidth ? cells[id.x - scrWidth + 1].pre : 0;
+        val += cells[id.x - Width].pre;
+        val += x - 1 >= 0 ? cells[id.x - Width - 1].pre : 0;
+        val += x + 1 < Width ? cells[id.x - Width + 1].pre : 0;
     }
 
-    if(y + 1 < scrWidth)
+    if(y + 1 < Width)
     {
-        val += cells[id.x + scrWidth].pre;
-        val += x - 1 >= 0 ? cells[id.x + scrWidth - 1].pre : 0;
-        val += x + 1 < scrWidth ? cells[id.x + scrWidth + 1].pre : 0;
+        val += cells[id.x + Width].pre;
+        val += x - 1 >= 0 ? cells[id.x + Width - 1].pre : 0;
+        val += x + 1 < Width ? cells[id.x + Width + 1].pre : 0;
     }
 
     int offset = cells[id.x].pre == 0 ? 9 : 0;
@@ -69,7 +68,7 @@ void Update (uint3 id : SV_DispatchThreadID)
 
 float4 GetVal(uint2 coord)
 {
-    if(cells[coord.y*scrWidth+coord.x].val==1)
+    if(cells[coord.y*Width+coord.x].val==1)
     {
         return float4(0.0, 0.0, 0.0, 0.0);
     }
