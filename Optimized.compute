@@ -1,0 +1,148 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel Init
+#pragma kernel Sum
+#pragma kernel Process
+#pragma kernel Update
+#pragma kernel Render
+
+RWBuffer<uint> data;
+RWBuffer<uint> sum;
+RWTexture2D<float4> tex;
+
+int width;
+int height;
+float zoom;
+int posx;
+int posy;
+int rule;
+
+float rand(float2 st, float n) {
+ 	st = floor(st * n);
+    return frac(sin(dot(st.xy, float2(12.9898,78.233)))*43758.5453123);
+}
+
+uint GetIdx(uint2 pos)
+{
+    return pos.x + pos.y * width;
+}
+
+uint GetIdx(uint posx, uint posy)
+{
+    return posx + posy * width;
+}
+
+[numthreads(100, 1, 1)]
+void Init(uint3 id : SV_DispatchThreadID)
+{
+    //float random = rand(float2(id.x, 11), 10);
+    uint val = 0;
+    uint pre = val << 16;
+    data[id.x] = val | pre;
+}
+
+bool GetVal(uint2 pos)
+{
+    uint val = data[GetIdx(pos.x, pos.y/16)];
+    return (val >> (pos.y%16) & 1) == 1;
+}
+
+bool GetPre(uint2 pos)
+{
+    uint pre = data[GetIdx(pos.x, pos.y/16)] >> 16;
+    return (pre >> (pos.y%16) & 1) == 1;
+}
+
+uint GetVal16(uint pos)
+{
+    return data[pos] & 0xFFFF;
+}
+
+uint GetPre16(uint pos)
+{
+    return data[pos] >> 16;
+}
+
+
+[numthreads(100, 1, 1)]
+void Sum(uint3 id : SV_DispatchThreadID)
+{
+    int x = id.x % width;
+
+    uint block1 = GetPre16(id.x);
+    uint block0 = x == 0 ? 0 : GetPre16(id.x-1);
+    uint block2 = x == width - 1 ? 0 : GetPre16(id.x+1);
+
+    uint s0 = block0 ^ block1 ^ block2;
+    uint s1 = (block0 & block1) | (block0 & block2) | (block1 & block2);
+
+    sum[id.x] = s0 | (s1 << 16);
+}
+
+[numthreads(100, 1, 1)]
+void Process(uint3 id : SV_DispatchThreadID)
+{
+    int y = id.x / width;
+
+    uint tmp = sum[id.x];
+    uint s10 = tmp & 0xFFFF;
+    uint s11 = tmp >> 16;
+    tmp = y == 0 ? 0 : sum[id.x-width];
+    uint b0 = (tmp & 0xFFFF) >> 15;
+    uint b1 = tmp >> 31;
+    tmp = y == height - 1 ? 0 : sum[id.x+width];
+    uint t0 = tmp & 1;
+    uint t1 = (tmp >> 16) & 1;
+    uint s00 = s10 << 1;
+    uint s01 = s11 << 1;
+    s00 |= b0;
+    s01 |= b1;
+    uint s20 = s10 >> 1;
+    uint s21 = s11 >> 1;
+    s20 |= t0 << 15;
+    s21 |= t1 << 15;
+
+    // Need Optimization
+    //int r0 = s00 ^ s10 ^ s20;
+    //int rc = (s00 & s10) | (s00 & s20) | (s10 & s20);
+    //int r1 = s01 ^ s11 ^ s21 ^ rc;
+    //int r2 = 
+    int s = 0;
+    int offset = 0;
+    tmp = 0;
+    for(int i = 0; i < 16; i++)
+    {
+        s = ((s00 >> i) & 1) + ((s10 >> i) & 1) + ((s20 >> i) & 1) +
+            (((s01 >> i) & 1) + ((s11 >> i) & 1) + ((s21 >> i) & 1)) * 2;
+        int pre = GetPre16(id.x) >> i & 1;
+        s -= pre;
+        offset = pre == 0 ? 9 : 0;
+        uint val = ((rule >> offset) >> s) & 1;
+        tmp |= val << i;
+    }
+    data[id.x] = data[id.x] & 0xFFFF0000 | tmp;
+}
+
+[numthreads(100, 1, 1)]
+void Update(uint3 id : SV_DispatchThreadID)
+{
+    uint val = data[id.x] & 0xFFFF;
+    data[id.x] = val | (val << 16);
+}
+
+[numthreads(4, 4, 1)]
+void Render(uint3 id : SV_DispatchThreadID)
+{
+    float x = id.x / zoom + posx;
+    float y = id.y / zoom + posy;
+    tex[id.xy] = GetVal(uint2(x, y)) ? float4(0.0, 0.0, 0.0, 0.0) : float4(1.0, 1.0, 1.0, 0.0);
+    //int sum=0;
+    //for(uint x=3*id.x;x<3*id.x+3;x++)
+    //{
+    //    for(uint y=3*id.y;y<3*id.y+3;y++)
+    //    {
+    //        //if(x>=3840 || y>=2160) break;
+    //        sum+=GetVal(uint2(x, y)) ? 1 : 0;
+    //    }
+    //}
+    //tex[id.xy] = sum>=1 ? float4(0.0, 0.0, 0.0, 0.0) : float4(1.0, 1.0, 1.0, 0.0);
+}

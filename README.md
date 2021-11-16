@@ -2,8 +2,6 @@
 
 **`.rle` file supported**
 
-TODO: Scale larger than `65535*1024` can't be supported due to Unity compute shader's constraints and no way to get the reference of subarray in C# without using pointer in `unsafe` mode. Larger scale may be implemented via C++ and OpenGL.
-
 **Controll:**
 
 `Space`: Pause/Start
@@ -14,10 +12,11 @@ TODO: Scale larger than `65535*1024` can't be supported due to Unity compute sha
 
 `Click`: Add/Remove
 
-**2K 500FPS GTX1080:**
+**2K 700FPS GTX1080:**
 ![](run.png)
-
-**4K 450FPS GTX1080**
 
 **Turing machine:**
 ![](turing.png)
+
+**Clock 10016*6796 200FPS:**
+![](clock.png)
