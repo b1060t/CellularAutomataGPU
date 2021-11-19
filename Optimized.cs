@@ -49,9 +49,9 @@ public class Optimized : MonoBehaviour
 
         cellWidth = WIDTH;
         cellHeight = HEIGHT / 16;
-        data = new uint[cellWidth*cellHeight];
+        data = new uint[(cellWidth+2)*(cellHeight+2)];
         buffer = new ComputeBuffer(data.Length, sizeof(int));
-        horizontalSum = new uint[cellWidth*cellHeight];
+        horizontalSum = new uint[(cellWidth+2)*(cellHeight+2)];
         sumBuffer = new ComputeBuffer(horizontalSum.Length, sizeof(int));
 
         texture = new RenderTexture(Screen.width, Screen.height, 24);
@@ -228,7 +228,7 @@ public class Optimized : MonoBehaviour
 								for(;ptr<max;ptr++)
 								{
                                     int offset = row % 16;
-                                    int idx = (row/16)*WIDTH+ptr+startPoint.x;
+                                    int idx = (row/16)*(WIDTH+2)+ptr+startPoint.x+1;
 									data[idx] ^= (uint)(1 << offset);
 								}
 								num = 0;
@@ -236,7 +236,7 @@ public class Optimized : MonoBehaviour
 							else
 							{
 								int offset = row % 16;
-                                int idx = (row/16)*WIDTH+ptr+startPoint.x;
+                                int idx = (row/16)*(WIDTH+2)+ptr+startPoint.x+1;
 								data[idx] ^= (uint)(1 << offset);
 								ptr++;
 							}

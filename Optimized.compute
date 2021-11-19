@@ -23,12 +23,12 @@ float rand(float2 st, float n) {
 
 uint GetIdx(uint2 pos)
 {
-    return pos.x + pos.y * width;
+    return pos.x + 1 + (pos.y + 1) * (width + 2);
 }
 
 uint GetIdx(uint posx, uint posy)
 {
-    return posx + posy * width;
+    return posx + 1 + (posy + 1) * (width + 2);
 }
 
 [numthreads(100, 1, 1)]
@@ -37,7 +37,9 @@ void Init(uint3 id : SV_DispatchThreadID)
     //float random = rand(float2(id.x, 11), 10);
     uint val = 0;
     uint pre = val << 16;
-    data[id.x] = val | pre;
+    uint y = id.x / width;
+    uint x = id.x % width;
+    data[(y+1)*(width+2)+x+1] = val | pre;
 }
 
 bool GetVal(uint2 pos)
@@ -66,30 +68,36 @@ uint GetPre16(uint pos)
 [numthreads(100, 1, 1)]
 void Sum(uint3 id : SV_DispatchThreadID)
 {
-    int x = id.x % width;
+    //int x = id.x % width;
+    uint y = id.x / width;
+    uint x = id.x % width;
+    uint idx = (y + 1) * (width + 2) + x + 1;
 
-    uint block1 = GetPre16(id.x);
-    uint block0 = x == 0 ? 0 : GetPre16(id.x-1);
-    uint block2 = x == width - 1 ? 0 : GetPre16(id.x+1);
+    uint block1 = GetPre16(idx);
+    uint block0 = GetPre16(idx-1);
+    uint block2 = GetPre16(idx+1);
 
     uint s0 = block0 ^ block1 ^ block2;
     uint s1 = (block0 & block1) | (block0 & block2) | (block1 & block2);
 
-    sum[id.x] = s0 | (s1 << 16);
+    sum[idx] = s0 | (s1 << 16);
 }
 
 [numthreads(100, 1, 1)]
 void Process(uint3 id : SV_DispatchThreadID)
 {
-    int y = id.x / width;
+    //int y = id.x / width;
+    uint y = id.x / width;
+    uint x = id.x % width;
+    uint idx = (y + 1) * (width + 2) + x + 1;
 
-    uint tmp = sum[id.x];
+    uint tmp = sum[idx];
     uint s10 = tmp & 0xFFFF;
     uint s11 = tmp >> 16;
-    tmp = y == 0 ? 0 : sum[id.x-width];
+    tmp = sum[idx-width-2];
     uint b0 = (tmp & 0xFFFF) >> 15;
     uint b1 = tmp >> 31;
-    tmp = y == height - 1 ? 0 : sum[id.x+width];
+    tmp = sum[idx+width+2];
     uint t0 = tmp & 1;
     uint t1 = (tmp >> 16) & 1;
     uint s00 = s10 << 1;
@@ -113,20 +121,23 @@ void Process(uint3 id : SV_DispatchThreadID)
     {
         s = ((s00 >> i) & 1) + ((s10 >> i) & 1) + ((s20 >> i) & 1) +
             (((s01 >> i) & 1) + ((s11 >> i) & 1) + ((s21 >> i) & 1)) * 2;
-        int pre = GetPre16(id.x) >> i & 1;
+        int pre = GetPre16(idx) >> i & 1;
         s -= pre;
         offset = pre == 0 ? 9 : 0;
         uint val = ((rule >> offset) >> s) & 1;
         tmp |= val << i;
     }
-    data[id.x] = data[id.x] & 0xFFFF0000 | tmp;
+    data[idx] = data[idx] & 0xFFFF0000 | tmp;
 }
 
 [numthreads(100, 1, 1)]
 void Update(uint3 id : SV_DispatchThreadID)
 {
-    uint val = data[id.x] & 0xFFFF;
-    data[id.x] = val | (val << 16);
+    uint y = id.x / width;
+    uint x = id.x % width;
+    uint idx = (y + 1) * (width + 2) + x + 1;
+    uint val = data[idx] & 0xFFFF;
+    data[idx] = val | (val << 16);
 }
 
 [numthreads(4, 4, 1)]

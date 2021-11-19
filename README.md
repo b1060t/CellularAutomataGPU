@@ -18,5 +18,5 @@
 **Turing machine:**
 ![](turing.png)
 
-**Clock 10016*6796 200FPS:**
+**Clock 10016*6796 350FPS:**
 ![](clock.png)
